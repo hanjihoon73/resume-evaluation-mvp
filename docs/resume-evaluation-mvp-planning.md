@@ -6,10 +6,12 @@
     - UI/UX Style:
         - CSS: Tailwind CSS
         - Components: shadcn/ui, Lucide React icons
-    - LLM
+    - LLM:
         - AI Model: Gemini 3 Flash Preview (models/gemini-3-flash-preview)
         - API Key: AIzaSyCP9-c9DUxu_BwPUa0yhGDwC8apNZ6Dc6s
-    - PDF: @react-pdf/renderer
+    - PDF:
+        - @react-pdf/renderer (pdf-parse@1.1.1)
+        - font: pretendard
 - 디자인 컨셉
     - 트렌디한 다크 모드, 네온 스타일, 미니멀리즘, 글래스모피즘
     - 메인 컬러: 블루 계열

@@ -5,7 +5,7 @@
 ## 1. 프로젝트 개요 및 환경 설정
 - **기본 스택**: TypeScript, Next.js (App Router)
 - **UI/UX**: Tailwind CSS, shadcn/ui, Lucide React icons
-- **디자인 컨셉**: 트렌디한 다크 모드, 글래스모피즘
+- **디자인 컨셉**: 트렌디한 다크 모드, 네온 스타일, 미니멀리즘, 글래스모피즘
 - **메인 컬러**: 블루 계열 / **보조 컬러**: 오렌지, 레드 계열
 - **폰트**: Pretendard (웹 및 PDF 공통)
 
@@ -46,5 +46,5 @@
 
 ## 4. 기술적 도전 과제 및 해결 방안
 - **PDF 파싱**: `RegExp`를 활용하여 파일명에서 포지션/이름/지원채널 정확히 추출
-- **PDF 생성**: `@react-pdf/renderer`에 Pretendard 폰트 임베딩 및 기획안 레이아웃 구현 (ver: pdf-parse@1.1.1)
+- **PDF 생성**: `@react-pdf/renderer`에 Pretendard 폰트 임베딩 및 기획안 레이아웃 구현
 - **상태 관리**: 분석 중인 파일의 진행률 및 결과를 관리하기 위한 전역/로컬 상태 설계
