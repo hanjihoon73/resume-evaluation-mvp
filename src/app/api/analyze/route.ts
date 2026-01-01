@@ -10,6 +10,7 @@ export async function POST(req: NextRequest) {
     try {
         const formData = await req.formData();
         const file = formData.get('file') as File;
+        const modelName = formData.get('modelName') as string || 'gemini-1.5-flash';
 
         if (!file) {
             return NextResponse.json({ error: "No file provided" }, { status: 400 });
@@ -41,7 +42,7 @@ export async function POST(req: NextRequest) {
         const stream = new ReadableStream({
             async start(controller) {
                 try {
-                    const analysisResult = await analyzeResumeWithRetry(text, (round) => {
+                    const analysisResult = await analyzeResumeWithRetry(text, modelName, (round) => {
                         controller.enqueue(encoder.encode(JSON.stringify({ type: 'round', round }) + "\n"));
                     });
                     const totalScore = calculateTotalScore(analysisResult);

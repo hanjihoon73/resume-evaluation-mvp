@@ -1,6 +1,5 @@
-
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { model } from "./gemini";
+import { getGeminiModel } from "./gemini";
 import { SYSTEM_PROMPT } from "./system-prompt";
 
 export interface AnalysisResult {
@@ -22,7 +21,8 @@ export interface AnalysisResult {
 }
 
 // Function to analyze a single text chunk (resume content)
-async function analyzeResumeText(text: string): Promise<AnalysisResult> {
+async function analyzeResumeText(text: string, modelName: string): Promise<AnalysisResult> {
+    const model = getGeminiModel(modelName);
     const prompt = `
     다음 이력서 내용을 분석해 주세요.
     
@@ -53,28 +53,42 @@ async function analyzeResumeText(text: string): Promise<AnalysisResult> {
 }
 
 // Function to perform 3 rounds of analysis and average the scores
-export async function analyzeResumeWithRetry(text: string, onProgress?: (round: number) => void): Promise<AnalysisResult> {
+export async function analyzeResumeWithRetry(text: string, modelName: string, onProgress?: (round: number) => void): Promise<AnalysisResult> {
     const ROUNDS = 3;
-    const results: AnalysisResult[] = [];
+    let lastError = "";
 
-    // Serial Processing for 3 rounds
-    for (let i = 0; i < ROUNDS; i++) {
+    // Parallel Processing for 3 rounds
+    console.log(`Starting parallel analysis (3 rounds) with ${modelName}...`);
+
+    let completedRounds = 0;
+    const promises = Array.from({ length: ROUNDS }).map(async (_, i) => {
         try {
-            console.log(`Analyzing round ${i + 1}...`);
-            if (onProgress) onProgress(i + 1);
-            const result = await analyzeResumeText(text);
-            results.push(result);
-        } catch (error) {
-            console.error(`Error in round ${i + 1}`, error);
-            // Continue or Fail? Plan says perform 3 times. If one fails, we might want to retry or skip.
-            // For MVP, if it fails, we will try once more or just ignore. 
-            // Let's try to proceed if we have at least 1 result, but strictly we should try to get 3.
-            // I'll add a simple retry logic inside or just accept failure and avg what we have.
+            // Add a small stagger delay (e.g., 500ms) to avoid hitting RPM limits aggressively
+            if (i > 0) await new Promise(resolve => setTimeout(resolve, i * 800));
+
+            const result = await analyzeResumeText(text, modelName);
+            completedRounds++;
+            if (onProgress) onProgress(completedRounds);
+            return result;
+        } catch (error: any) {
+            console.error(`Error in parallel round ${i + 1}`, error);
+            const msg = error.message || "";
+            if (msg.includes('429') || msg.includes('RESOURCE_EXHAUSTED')) {
+                lastError = "토큰 사용량(RPM/TPM) 한도에 도달했습니다. 잠시 후 다시 시도하거나 다른 모델을 선택해 주세요.";
+            } else {
+                lastError = msg || "Unknown error";
+            }
+            throw error;
         }
-    }
+    });
+
+    const settledResults = await Promise.allSettled(promises);
+    const results = settledResults
+        .filter((r): r is PromiseFulfilledResult<AnalysisResult> => r.status === 'fulfilled')
+        .map(r => r.value);
 
     if (results.length === 0) {
-        throw new Error("Analysis failed completely.");
+        throw new Error(`${modelName} 모델 분석 실패: ${lastError}`);
     }
 
     // Calculate Averages for scores

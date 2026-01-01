@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useResumeStore, ResumeData } from "@/lib/store"
 import { parseFileName } from "@/lib/file-parser"
@@ -34,6 +35,28 @@ export default function Home() {
     resetAll
   } = useResumeStore()
   const router = useRouter()
+
+  const [availableModels, setAvailableModels] = useState<{ id: string, displayName: string }[]>([])
+  const [selectedModel, setSelectedModel] = useState<string>("gemini-1.5-flash")
+
+  useEffect(() => {
+    const fetchModels = async () => {
+      try {
+        const res = await fetch('/api/models')
+        if (res.ok) {
+          const data = await res.json()
+          setAvailableModels(data)
+          // Default to the first pro or flash model if available
+          if (data.length > 0) {
+            setSelectedModel(data[0].id)
+          }
+        }
+      } catch (e) {
+        console.error("Failed to fetch models", e)
+      }
+    }
+    fetchModels()
+  }, [])
 
   // State to calculate total progress 
   // (Total files processed / Total files * 100) or granular?
@@ -84,6 +107,7 @@ export default function Home() {
         }
         const formData = new FormData();
         formData.append('file', resume.file);
+        formData.append('modelName', selectedModel);
 
         const res = await fetch('/api/analyze', {
           method: 'POST',
@@ -121,7 +145,8 @@ export default function Home() {
               } else if (data.type === 'result') {
                 updateResumeStatus(resume.id, 'completed', data.result, data.totalScore);
               } else if (data.type === 'error') {
-                throw new Error(data.message || "AI Analysis Failed");
+                updateResumeStatus(resume.id, 'error', undefined, undefined, data.message || "AI Analysis Failed");
+                break; // Exit the stream reader for this resume
               }
             } catch (e) {
               console.error("Error parsing stream chunk", e);
@@ -175,10 +200,35 @@ export default function Home() {
       </div>
 
       {/* Upload & Action Area */}
-      <Card className="max-w-3xl mx-auto w-full card-glass overflow-hidden">
+      <Card className="max-w-3xl mx-auto w-full card-glass overflow-hidden px-12 py-2">
         <CardContent className="p-10 flex flex-col items-center gap-6 text-center">
           {globalStatus === 'idle' ? (
             <>
+              {/* Model Selection UI */}
+              <div className="w-full max-w-sm mb-4">
+                <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2 block">
+                  AI 분석 모델 선택
+                </label>
+                <div className="relative group">
+                  <select
+                    value={selectedModel}
+                    onChange={(e) => setSelectedModel(e.target.value)}
+                    className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 appearance-none cursor-pointer transition-all hover:bg-white/10"
+                  >
+                    {availableModels.map((m: any) => (
+                      <option key={m.id} value={m.id} className="bg-slate-900 text-white">
+                        {m.displayName}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground group-hover:text-primary transition-colors">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
               <div className="bg-primary/10 p-6 rounded-full">
                 <UploadCloud className="w-12 h-12 text-primary" />
               </div>
@@ -281,7 +331,12 @@ export default function Home() {
                         ) : resume.status === 'analyzing' ? (
                           <Loader2 className="w-5 h-5 animate-spin mx-auto text-muted-foreground" />
                         ) : resume.status === 'error' ? (
-                          <XCircle className="w-5 h-5 text-destructive mx-auto" />
+                          <div className="flex flex-col items-center gap-1 min-w-[120px]">
+                            <XCircle className="w-5 h-5 text-destructive" />
+                            <span className="text-[11px] text-destructive/90 leading-tight whitespace-normal break-words px-2" title={resume.error}>
+                              {resume.error}
+                            </span>
+                          </div>
                         ) : (
                           <span className="text-muted-foreground">-</span>
                         )}
