@@ -18,11 +18,11 @@
     - [x] [STEP 2] 모델 선택 UI 연동 (Home 화면)
     - [x] [STEP 3] 분석 병렬화 전환 (Performance) <!-- RPM 한도 대응을 위해 800ms 간격 순차 시작(Staggering) 적용 -->
     - [x] [STEP 4] 429 할당량 에러 처리 고도화 (UI/UX) <!-- 에러 오버레이 중단 및 테이블 내 상세 메시지 가시성 개선 -->
-- [ ] Claude 모델 연동 및 멀티 AI 지원 (v1.4)
-    - [ ] [STEP 1] Anthropic SDK 연동 및 클라이언트 구현
-    - [ ] [STEP 2] 분석 엔진 리팩토링 (AI Provider Dispatcher)
-    - [ ] [STEP 3] 모델 리스트 API 확장 (Claude 포함)
-    - [ ] [STEP 4] 에러 핸들링 및 UI 최적화
+- [x] Claude 모델 연동 및 멀티 AI 지원 (v1.4)
+    - [x] [STEP 1] Anthropic SDK 연동 및 client 구현
+    - [x] [STEP 2] 분석 엔진 리팩토링 (AI Provider Dispatcher)
+    - [x] [STEP 3] 모델 리스트 API 확장 (Claude 포함)
+    - [x] [STEP 4] 에러 핸들링 및 UI 최적화
 - [ ] 사용자 최종 컨펌 및 테스트 요청
 - [x] 홈 화면 구현 (입사 지원자 자동 분석)
     - [x] 제목 및 서브타이틀 구성 <!-- 기획서: 홈 화면 타이틀/서브타이틀 준수 -->

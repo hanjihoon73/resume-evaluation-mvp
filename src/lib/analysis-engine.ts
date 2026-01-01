@@ -1,6 +1,6 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import { getGeminiModel } from "./gemini";
 import { SYSTEM_PROMPT } from "./system-prompt";
+import { anthropic, callClaude } from "./anthropic";
 
 export interface AnalysisResult {
     education: { score: number; summary: string };
@@ -10,11 +10,12 @@ export interface AnalysisResult {
     cultureFit: { score: number; summary: string };
     basicInfo: {
         finalEducation: string;
+        major: string; // Added field for v1.5
         gpa: string;
         birthYear: string;
         totalCareerParams: string;
     };
-    overallReview: string;
+    overallReview: string | string[];
     pros: string[];
     cons: string[];
     interviewQuestions: string[];
@@ -22,7 +23,6 @@ export interface AnalysisResult {
 
 // Function to analyze a single text chunk (resume content)
 async function analyzeResumeText(text: string, modelName: string): Promise<AnalysisResult> {
-    const model = getGeminiModel(modelName);
     const prompt = `
     다음 이력서 내용을 분석해 주세요.
     
@@ -31,25 +31,36 @@ async function analyzeResumeText(text: string, modelName: string): Promise<Analy
     ---
     `;
 
-    // We will use generateContent with the system instruction if supported, 
-    // or prepend system prompt. Gemini 1.5 Flash supports systemInstruction via config, 
-    // but the simple SDK usage often is chat or generateContent with text.
-    // Let's try prepending for safety in this MVP or using systemInstruction if the client supports it comfortably.
-    // The current GoogleGenerativeAI SDK supports systemInstruction.
+    let responseText = "";
 
-    // However, I already initialized 'model' in gemini.ts without systemInstruction.
-    // I can pass it here if I create a new getGenerativeModel or just mix it in the prompt.
-    // For robust JSON output, I will ask for JSON schema or just text.
+    if (modelName.startsWith('claude')) {
+        // Claude Analysis
+        responseText = await callClaude(modelName, SYSTEM_PROMPT, prompt);
 
-    const result = await model.generateContent({
-        contents: [{ role: 'user', parts: [{ text: SYSTEM_PROMPT + "\n" + prompt }] }],
-        generationConfig: {
-            responseMimeType: "application/json",
+        // Extract JSON from Claude response (sometimes it wraps in ```json ... ```)
+        if (responseText.includes('```json')) {
+            responseText = responseText.split('```json')[1].split('```')[0].trim();
+        } else if (responseText.includes('```')) {
+            responseText = responseText.split('```')[1].split('```')[0].trim();
         }
-    });
+    } else {
+        // Gemini Analysis (Default)
+        const model = getGeminiModel(modelName);
+        const result = await model.generateContent({
+            contents: [{ role: 'user', parts: [{ text: SYSTEM_PROMPT + "\n" + prompt }] }],
+            generationConfig: {
+                responseMimeType: "application/json",
+            }
+        });
+        responseText = result.response.text();
+    }
 
-    const responseText = result.response.text();
-    return JSON.parse(responseText) as AnalysisResult;
+    try {
+        return JSON.parse(responseText) as AnalysisResult;
+    } catch (e) {
+        console.error("Failed to parse AI response as JSON:", responseText);
+        throw new Error("AI 응답 형식이 올바르지 않습니다 (JSON 파싱 실패).");
+    }
 }
 
 // Function to perform 3 rounds of analysis and average the scores
@@ -72,11 +83,19 @@ export async function analyzeResumeWithRetry(text: string, modelName: string, on
             return result;
         } catch (error: any) {
             console.error(`Error in parallel round ${i + 1}`, error);
-            const msg = error.message || "";
-            if (msg.includes('429') || msg.includes('RESOURCE_EXHAUSTED')) {
+            const msg = (error.message || "").toLowerCase();
+
+            // Check for Gemini/Claude specific error patterns
+            if (msg.includes('429') || msg.includes('resource_exhausted') || msg.includes('rate_limit')) {
                 lastError = "토큰 사용량(RPM/TPM) 한도에 도달했습니다. 잠시 후 다시 시도하거나 다른 모델을 선택해 주세요.";
+            } else if (msg.includes('credit balance') || msg.includes('billing')) {
+                lastError = "Anthropic API 잔액이 부족합니다. 크레딧을 충전하거나 다른 모델을 선택해 주세요.";
+            } else if (msg.includes('overloaded') || msg.includes('503')) {
+                lastError = "AI 서버가 혼잡합니다. 잠시 후 다시 시도해 주세요.";
+            } else if (msg.includes('authentication') || msg.includes('invalid api key') || msg.includes('401')) {
+                lastError = "API 키가 올바르지 않거나 활성화되지 않았습니다. 설정을 확인해 주세요.";
             } else {
-                lastError = msg || "Unknown error";
+                lastError = error.message || "Unknown error";
             }
             throw error;
         }

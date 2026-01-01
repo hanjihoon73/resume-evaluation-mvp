@@ -190,7 +190,7 @@ export default function Home() {
   return (
     <div className="flex flex-col gap-16 pb-20">
       {/* Header */}
-      <div className="text-center space-y-4 pt-10">
+      <div className="text-center space-y-4 pt-16">
         <h1 className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-primary to-purple-400">
           입사 지원자 자동 분석
         </h1>
@@ -268,11 +268,16 @@ export default function Home() {
             </>
           ) : (
             <div className="w-full space-y-4">
-              <div className="flex justify-between items-center px-2">
-                <span className="font-semibold text-lg">
-                  {globalStatus === 'completed' ? '분석 완료' : 'AI 분석 진행 중...'}
-                </span>
-                <span className="text-primary font-mono">{Math.min(100, Math.round(progressPercent))}%</span>
+              <div className="flex justify-between items-end px-2">
+                <div className="flex items-center gap-3">
+                  <span className="font-semibold text-lg">
+                    {globalStatus === 'completed' ? '분석 완료' : 'AI 분석 진행 중...'}
+                  </span>
+                  <Badge variant="outline" className="text-[10px] py-0 px-2 opacity-70 border-primary/30 text-primary self-center mt-1">
+                    {availableModels.find(m => m.id === selectedModel)?.displayName || selectedModel}
+                  </Badge>
+                </div>
+                <span className="text-primary font-mono text-xl">{Math.min(100, Math.round(progressPercent))}%</span>
               </div>
               <Progress value={progressPercent} className="h-3 w-full" />
               {globalStatus === 'completed' && (

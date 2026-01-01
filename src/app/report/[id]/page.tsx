@@ -108,69 +108,94 @@ export default function ReportPage() {
             </div>
 
             {/* Title Section */}
-            <div className="text-center space-y-2 mb-8">
-                <h1 className="text-3xl font-bold">지원자 분석 리포트</h1>
-                <p className="text-muted-foreground text-lg">
-                    <span className="font-semibold text-primary">{metadata.position}</span> 포지션 ·
-                    <span className="font-semibold text-white mx-2">{metadata.applicantName}</span>님 ·
-                    <span className="text-xs ml-2 bg-white/10 px-2 py-1 rounded">{metadata.channel}</span>
-                </p>
+            <div className="text-center mb-10">
+                <h1 className="text-3xl font-bold tracking-tight">지원자 분석 리포트</h1>
             </div>
 
-            {/* Top Section: Basic Info & Overall Score */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {/* Basic Info Card */}
-                <Card className="card-glass h-full">
-                    <CardHeader>
-                        <CardTitle className="text-lg flex items-center gap-2">
-                            <CheckSquare className="w-5 h-5 text-primary" /> 기본 정보
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4 text-sm">
-                        <div className="flex justify-between py-1 border-b border-white/5">
-                            <span className="text-muted-foreground">최종학력</span>
-                            <span className="font-semibold">{result.basicInfo.finalEducation || '-'}</span>
+            {/* Basic Info Section - Horizontal Row */}
+            <Card className="card-glass border-white/10 overflow-hidden">
+                <div className="flex flex-wrap md:flex-nowrap divide-y md:divide-y-0 md:divide-x divide-white/5">
+                    {/* 1. 포지션 */}
+                    <div className="flex-1 min-w-[120px] p-4 flex flex-col items-center justify-center gap-1 group hover:bg-white/5 transition-colors">
+                        <span className="font-bold text-base text-primary text-center">{metadata.position}</span>
+                        <span className="text-[12px] uppercase tracking-widest text-muted-foreground font-bold group-hover:text-primary transition-colors">포지션</span>
+                    </div>
+                    {/* 2. 이름 */}
+                    <div className="flex-1 min-w-[100px] p-4 flex flex-col items-center justify-center gap-1 group hover:bg-white/5 transition-colors">
+                        <span className="font-bold text-base text-white">{metadata.applicantName}</span>
+                        <span className="text-[12px] uppercase tracking-widest text-muted-foreground font-bold group-hover:text-primary transition-colors">이름</span>
+                    </div>
+                    {/* 3. 지원채널 */}
+                    <div className="flex-1 min-w-[100px] p-4 flex flex-col items-center justify-center gap-1 group hover:bg-white/5 transition-colors">
+                        <span className="font-bold text-base text-yellow-400">{metadata.channel}</span>
+                        <span className="text-[12px] uppercase tracking-widest text-muted-foreground font-bold group-hover:text-primary transition-colors">지원채널</span>
+                    </div>
+                    {/* 4. 전공 */}
+                    <div className="flex-1 min-w-[120px] p-4 flex flex-col items-center justify-center gap-1 group hover:bg-white/5 transition-colors">
+                        <span className="font-semibold text-sm text-center">{result.basicInfo.major || '정보 없음'}</span>
+                        <span className="text-[12px] uppercase tracking-widest text-muted-foreground font-bold group-hover:text-primary transition-colors">전공</span>
+                    </div>
+                    {/* 5. 최종학력 */}
+                    <div className="flex-1 min-w-[100px] p-4 flex flex-col items-center justify-center gap-1 group hover:bg-white/5 transition-colors">
+                        <span className="font-semibold text-base">{result.basicInfo.finalEducation || '-'}</span>
+                        <span className="text-[12px] uppercase tracking-widest text-muted-foreground font-bold group-hover:text-primary transition-colors">최종학력</span>
+                    </div>
+                    {/* 6. 학점 */}
+                    <div className="flex-1 min-w-[80px] p-4 flex flex-col items-center justify-center gap-1 group hover:bg-white/5 transition-colors">
+                        <span className="font-semibold text-base">{result.basicInfo.gpa || '-'}</span>
+                        <span className="text-[12px] uppercase tracking-widest text-muted-foreground font-bold group-hover:text-primary transition-colors">학점</span>
+                    </div>
+                    {/* 7. 나이 */}
+                    <div className="flex-1 min-w-[80px] p-4 flex flex-col items-center justify-center gap-1 group hover:bg-white/5 transition-colors">
+                        <span className="font-semibold text-base">
+                            {result.basicInfo.birthYear
+                                ? `${new Date().getFullYear() - parseInt(result.basicInfo.birthYear)}세`
+                                : '-'}
+                        </span>
+                        <span className="text-[12px] uppercase tracking-widest text-muted-foreground font-bold group-hover:text-primary transition-colors">나이</span>
+                    </div>
+                    {/* 8. 경력기간 */}
+                    <div className="flex-1 min-w-[120px] p-4 flex flex-col items-center justify-center gap-1 group hover:bg-white/5 transition-colors">
+                        <span className="font-semibold text-base whitespace-nowrap">{result.basicInfo.totalCareerParams || '-'}</span>
+                        <span className="text-[12px] uppercase tracking-widest text-muted-foreground font-bold group-hover:text-primary transition-colors">경력기간</span>
+                    </div>
+                </div>
+            </Card>
+
+            {/* Overall Score & Review Section */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                {/* Score Card */}
+                <Card className="card-glass flex flex-col items-center justify-center p-8 bg-primary/5">
+                    <div className="text-muted-foreground text-base uppercase tracking-widest font-bold mb-4">종합 점수</div>
+                    <div className="flex items-baseline gap-2">
+                        <div className="text-7xl font-extrabold tracking-tighter text-primary leading-none">
+                            {totalScore}
                         </div>
-                        <div className="flex justify-between py-1 border-b border-white/5">
-                            <span className="text-muted-foreground">학점</span>
-                            <span className="font-semibold">{result.basicInfo.gpa || '-'}</span>
-                        </div>
-                        <div className="flex justify-between py-1 border-b border-white/5">
-                            <span className="text-muted-foreground">나이</span>
-                            <span className="font-semibold">
-                                {result.basicInfo.birthYear
-                                    ? `${new Date().getFullYear() - parseInt(result.basicInfo.birthYear)}세`
-                                    : '-'}
-                            </span>
-                        </div>
-                        <div className="flex justify-between py-1 border-b border-white/5">
-                            <span className="text-muted-foreground">경력기간</span>
-                            <span className="font-semibold">{result.basicInfo.totalCareerParams || '-'}</span>
-                        </div>
-                    </CardContent>
+                        <span className="text-lg text-muted-foreground/60 font-bold">/ 100</span>
+                    </div>
+                    <Badge className={`mt-6 text-sm px-4 py-1.5 font-bold shadow-lg ${suit.color}`}>
+                        {suit.label}
+                    </Badge>
                 </Card>
 
-                {/* Overall Score Card */}
-                <Card className="card-glass md:col-span-2 h-full flex flex-col justify-center">
-                    <div className="grid grid-cols-2 h-full">
-                        <div className="flex flex-col items-center justify-center p-6 border-r border-white/10">
-                            <div className="text-muted-foreground text-sm mb-2">종합 점수</div>
-                            <div className="text-6xl font-extrabold tracking-tighter text-primary">
-                                {totalScore}
-                                <span className="text-2xl text-muted-foreground ml-1">/ 100</span>
-                            </div>
-                            <Badge className={`mt-4 text-base px-4 py-1 ${suit.color}`}>
-                                {suit.label}
-                            </Badge>
-                        </div>
-                        <div className="p-6 flex flex-col justify-center gap-4">
-                            <div>
-                                <h3 className="font-bold mb-2">총평</h3>
-                                <p className="text-sm text-muted-foreground leading-relaxed line-clamp-6">
-                                    {result.overallReview}
-                                </p>
-                            </div>
-                        </div>
+                {/* Review Card */}
+                <Card className="card-glass md:col-span-3 p-8 flex flex-col justify-center border-white/5">
+                    <div className="flex items-center gap-2 mb-4">
+                        <CheckSquare className="w-5 h-5 text-primary" />
+                        <h3 className="font-bold text-lg">총평</h3>
+                    </div>
+                    <div className="space-y-3">
+                        {Array.isArray(result.overallReview) ? (
+                            <ul className="list-disc pl-5 space-y-2 text-base text-muted-foreground leading-relaxed">
+                                {result.overallReview.map((point, i) => (
+                                    <li key={i}>{point}</li>
+                                ))}
+                            </ul>
+                        ) : (
+                            <p className="text-base text-muted-foreground leading-relaxed">
+                                {result.overallReview}
+                            </p>
+                        )}
                     </div>
                 </Card>
             </div>
@@ -202,7 +227,7 @@ export default function ReportPage() {
                 <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
                     <FileText className="text-primary" /> 상세 항목 분석
                 </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="flex flex-col gap-6">
                     {/* 1. Education */}
                     <DetailCard
                         title="관련 전공"
@@ -226,9 +251,8 @@ export default function ReportPage() {
                         score={result.techStack.score}
                         starRating={getStarRating(result.techStack.score)}
                         summary={result.techStack.summary}
-                        className="md:col-span-2 lg:col-span-1" // Wide in md, normal in lg
                     />
-                    {/* 4. AI */}
+                    {/* 4. AI 역량 */}
                     <DetailCard
                         title="AI 역량"
                         icon={Cpu}
@@ -236,7 +260,7 @@ export default function ReportPage() {
                         starRating={getStarRating(result.aiCapability.score)}
                         summary={result.aiCapability.summary}
                     />
-                    {/* 5. Culture */}
+                    {/* 5. 컬쳐핏 */}
                     <DetailCard
                         title="컬쳐핏"
                         icon={HeartHandshake}

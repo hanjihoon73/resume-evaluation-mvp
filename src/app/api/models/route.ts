@@ -2,39 +2,16 @@ import { NextResponse } from 'next/server';
 import { genAI } from '@/lib/gemini';
 
 export async function GET() {
-    try {
-        // Attempt to list models using the SDK
-        const result = await genAI.listModels();
+    // We use a predefined stable list of models because genAI.listModels() 
+    // can be inconsistent across different SDK versions and environments.
+    const models = [
+        { id: 'gemini-3-flash', displayName: 'Gemini 3 Flash' },
+        { id: 'gemini-2.5-flash', displayName: 'Gemini 2.5 Flash' },
+        { id: 'gemini-2.5-flash-lite', displayName: 'Gemini 2.5 Flash Lite' },
+        { id: 'claude-3-5-sonnet-latest', displayName: 'Claude 3.5 Sonnet' },
+        { id: 'claude-3-5-haiku-latest', displayName: 'Claude 3.5 Haiku' },
+        { id: 'claude-3-opus-latest', displayName: 'Claude 3 Opus' },
+    ];
 
-        // Filter for models that support generating content and have 'gemini' in their name
-        const geminiModels = result.models
-            .filter(m => m.supportedGenerationMethods.includes('generateContent') && m.name.toLowerCase().includes('gemini'))
-            .map(m => ({
-                id: m.name.split('/')[1] || m.name, // Clean up "models/gemini-..." format
-                displayName: m.displayName,
-                description: m.description,
-            }));
-
-        // If no models found (sometimes listModels returns empty in specific environments), 
-        // provide the list the user explicitly mentioned as a fallback.
-        if (geminiModels.length === 0) {
-            return NextResponse.json([
-                { id: 'gemini-3-pro-preview', displayName: 'Gemini 3 Pro Preview' },
-                { id: 'gemini-3-flash-preview', displayName: 'Gemini 3 Flash Preview' },
-                { id: 'gemini-flash-latest', displayName: 'Gemini Flash Latest' },
-                { id: 'gemini-flash-lite-latest', displayName: 'Gemini Flash Lite Latest' },
-            ]);
-        }
-
-        return NextResponse.json(geminiModels);
-    } catch (error) {
-        console.error('Failed to list Gemini models:', error);
-        // Fallback to manual list provided by user
-        return NextResponse.json([
-            { id: 'gemini-3-pro-preview', displayName: 'Gemini 3 Pro Preview' },
-            { id: 'gemini-3-flash-preview', displayName: 'Gemini 3 Flash Preview' },
-            { id: 'gemini-flash-latest', displayName: 'Gemini Flash Latest' },
-            { id: 'gemini-flash-lite-latest', displayName: 'Gemini Flash Lite Latest' },
-        ]);
-    }
+    return NextResponse.json(models);
 }
