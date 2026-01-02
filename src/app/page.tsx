@@ -32,12 +32,13 @@ export default function Home() {
     updateResumeRound,
     currentAnalyzingIndex,
     setCurrentAnalyzingIndex,
+    selectedModel,
+    setSelectedModel,
     resetAll
   } = useResumeStore()
   const router = useRouter()
 
   const [availableModels, setAvailableModels] = useState<{ id: string, displayName: string }[]>([])
-  const [selectedModel, setSelectedModel] = useState<string>("gemini-1.5-flash")
 
   useEffect(() => {
     const fetchModels = async () => {
@@ -46,10 +47,6 @@ export default function Home() {
         if (res.ok) {
           const data = await res.json()
           setAvailableModels(data)
-          // Default to the first pro or flash model if available
-          if (data.length > 0) {
-            setSelectedModel(data[0].id)
-          }
         }
       } catch (e) {
         console.error("Failed to fetch models", e)

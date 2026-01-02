@@ -1,5 +1,5 @@
 import { getGeminiModel } from "./gemini";
-import { SYSTEM_PROMPT } from "./system-prompt";
+import { SYSTEM_PROMPT, ANALYSIS_SYNTHESIS_PROMPT } from "./system-prompt";
 import { anthropic, callClaude } from "./anthropic";
 
 export interface AnalysisResult {
@@ -63,6 +63,57 @@ async function analyzeResumeText(text: string, modelName: string): Promise<Analy
     }
 }
 
+/**
+ * 3회분의 분석 결과를 하나로 통합하는 최종 요약 라운드 (Synthesis Round)
+ */
+async function synthesizeResults(results: AnalysisResult[], finalScores: any, modelName: string): Promise<AnalysisResult> {
+    const synthesisInput = {
+        finalScores,
+        analysisRounds: results
+    };
+
+    const prompt = `
+    다음은 동일한 지원자에 대한 3회의 분석 결과입니다. 이를 바탕으로 가독성이 높고 풍부한 최종 통합 리포트를 작성해 주세요.
+    
+    데이터:
+    ${JSON.stringify(synthesisInput, null, 2)}
+    `;
+
+    let responseText = "";
+
+    try {
+        if (modelName.startsWith('claude')) {
+            responseText = await callClaude(modelName, ANALYSIS_SYNTHESIS_PROMPT, prompt);
+            if (responseText.includes('```json')) {
+                responseText = responseText.split('```json')[1].split('```')[0].trim();
+            } else if (responseText.includes('```')) {
+                responseText = responseText.split('```')[1].split('```')[0].trim();
+            }
+        } else {
+            const model = getGeminiModel(modelName);
+            const result = await model.generateContent({
+                contents: [{ role: 'user', parts: [{ text: ANALYSIS_SYNTHESIS_PROMPT + "\n" + prompt }] }],
+                generationConfig: { responseMimeType: "application/json" }
+            });
+            responseText = result.response.text();
+        }
+
+        const finalResult = JSON.parse(responseText) as AnalysisResult;
+
+        // 최종 점수는 AI가 임의로 변경하지 못하도록 사전에 계산된 평균값으로 강제 고정
+        finalResult.education.score = finalScores.education;
+        finalResult.career.score = finalScores.career;
+        finalResult.techStack.score = finalScores.techStack;
+        finalResult.aiCapability.score = finalScores.aiCapability;
+        finalResult.cultureFit.score = finalScores.cultureFit;
+
+        return finalResult;
+    } catch (e) {
+        console.error("Synthesis round failed:", e);
+        throw e;
+    }
+}
+
 // Function to perform 3 rounds of analysis and average the scores
 export async function analyzeResumeWithRetry(text: string, modelName: string, onProgress?: (round: number) => void): Promise<AnalysisResult> {
     const ROUNDS = 3;
@@ -110,34 +161,36 @@ export async function analyzeResumeWithRetry(text: string, modelName: string, on
         throw new Error(`${modelName} 모델 분석 실패: ${lastError}`);
     }
 
-    // Calculate Averages for scores
-    const avgHeight = (arr: number[]) => arr.reduce((a, b) => a + b, 0) / arr.length;
+    // 3. 점수 평균 계산
+    const avgScore = (arr: number[]) => Math.round(arr.reduce((a, b) => a + b, 0) / arr.length);
 
-    const finalResult: AnalysisResult = {
-        ...results[0], // Copy text fields from the first successful result
-        education: {
-            ...results[0].education,
-            score: Math.round(avgHeight(results.map(r => r.education.score)))
-        },
-        career: {
-            ...results[0].career,
-            score: Math.round(avgHeight(results.map(r => r.career.score)))
-        },
-        techStack: {
-            ...results[0].techStack,
-            score: Math.round(avgHeight(results.map(r => r.techStack.score)))
-        },
-        aiCapability: {
-            ...results[0].aiCapability,
-            score: Math.round(avgHeight(results.map(r => r.aiCapability.score)))
-        },
-        cultureFit: {
-            ...results[0].cultureFit,
-            score: Math.round(avgHeight(results.map(r => r.cultureFit.score)))
-        },
+    const finalScores = {
+        education: avgScore(results.map(r => r.education.score)),
+        career: avgScore(results.map(r => r.career.score)),
+        techStack: avgScore(results.map(r => r.techStack.score)),
+        aiCapability: avgScore(results.map(r => r.aiCapability.score)),
+        cultureFit: avgScore(results.map(r => r.cultureFit.score)),
     };
+    const totalScore = calculateTotalScore({ ...results[0], ...finalScores } as any);
 
-    return finalResult;
+    // 4. 최종 통합 라운드 (Synthesis Round) 진행
+    console.log(`Starting synthesis round for final report...`);
+    try {
+        const synthesizedResult = await synthesizeResults(results, { ...finalScores, totalScore }, modelName);
+        console.log("Synthesis completed successfully.");
+        return synthesizedResult;
+    } catch (e) {
+        console.warn("Synthesis failed, falling back to first result with averaged scores.", e);
+        // Fallback: 통합 실패 시 첫 번째 분석 결과에 평균 점수만 입혀서 반환
+        return {
+            ...results[0],
+            education: { ...results[0].education, score: finalScores.education },
+            career: { ...results[0].career, score: finalScores.career },
+            techStack: { ...results[0].techStack, score: finalScores.techStack },
+            aiCapability: { ...results[0].aiCapability, score: finalScores.aiCapability },
+            cultureFit: { ...results[0].cultureFit, score: finalScores.cultureFit },
+        };
+    }
 }
 
 export function calculateTotalScore(result: AnalysisResult): number {

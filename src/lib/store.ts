@@ -20,6 +20,7 @@ interface ResumeStore {
     resumes: ResumeData[];
     globalStatus: 'idle' | 'analyzing' | 'completed';
     currentAnalyzingIndex: number;
+    selectedModel: string;
 
     // Actions
     addResumes: (newResumes: ResumeData[]) => void;
@@ -27,6 +28,7 @@ interface ResumeStore {
     updateResumeRound: (id: string, round: number) => void;
     setGlobalStatus: (status: 'idle' | 'analyzing' | 'completed') => void;
     setCurrentAnalyzingIndex: (index: number) => void;
+    setSelectedModel: (model: string) => void;
     resetAll: () => void;
     getSortedResumes: () => ResumeData[];
 }
@@ -37,6 +39,7 @@ export const useResumeStore = create<ResumeStore>()(
             resumes: [],
             globalStatus: 'idle',
             currentAnalyzingIndex: -1,
+            selectedModel: 'gemini-flash-latest',
 
             addResumes: (newResumes) => set((state) => ({
                 resumes: [...state.resumes, ...newResumes.map(r => ({ ...r, currentRound: 0 }))],
@@ -52,6 +55,7 @@ export const useResumeStore = create<ResumeStore>()(
             setGlobalStatus: (status) => set({ globalStatus: status }),
 
             setCurrentAnalyzingIndex: (index) => set({ currentAnalyzingIndex: index }),
+            setSelectedModel: (model) => set({ selectedModel: model }),
 
             resetAll: () => set({ resumes: [], globalStatus: 'idle', currentAnalyzingIndex: -1 }),
 
