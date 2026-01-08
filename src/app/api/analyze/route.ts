@@ -1,10 +1,36 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { analyzeResumeWithRetry, calculateTotalScore } from '@/lib/analysis-engine';
+import { getDocument, GlobalWorkerOptions } from 'pdfjs-dist/legacy/build/pdf.mjs';
 
-// Note: pdf-parse requires a specific version or require syntax in some environments.
-// We point directly to the lib to avoid the 'debug mode' check in index.js which can crash Next.js.
-const pdf = require('pdf-parse/lib/pdf-parse.js');
+// pdfjs-dist 워커 설정 (Node.js 환경에서는 워커 스크립트 경로 설정)
+// @ts-ignore - 워커 경로 지정
+GlobalWorkerOptions.workerSrc = new URL(
+    'pdfjs-dist/legacy/build/pdf.worker.mjs',
+    import.meta.url
+).toString();
+
+// PDF 텍스트 추출 함수 (pdfjs-dist 사용)
+async function extractTextFromPDF(buffer: Buffer): Promise<string> {
+    const data = new Uint8Array(buffer);
+    const loadingTask = getDocument({ data });
+    const pdfDocument = await loadingTask.promise;
+
+    let fullText = '';
+
+    for (let pageNum = 1; pageNum <= pdfDocument.numPages; pageNum++) {
+        const page = await pdfDocument.getPage(pageNum);
+        const textContent = await page.getTextContent();
+
+        const pageText = textContent.items
+            .map((item: any) => item.str)
+            .join(' ');
+
+        fullText += pageText + '\n';
+    }
+
+    return fullText;
+}
 
 export async function POST(req: NextRequest) {
     try {
@@ -19,11 +45,10 @@ export async function POST(req: NextRequest) {
         const arrayBuffer = await file.arrayBuffer();
         const buffer = Buffer.from(arrayBuffer);
 
-        // 1. PDF Text Extraction
+        // 1. PDF Text Extraction (using pdfjs-dist)
         let text = "";
         try {
-            const data = await pdf(buffer);
-            text = data.text;
+            text = await extractTextFromPDF(buffer);
             if (!text || text.trim().length === 0) {
                 return NextResponse.json({
                     error: "Parsing Error",
