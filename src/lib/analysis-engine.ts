@@ -2,10 +2,16 @@ import { getGeminiModel } from "./gemini";
 import { SYSTEM_PROMPT, ANALYSIS_SYNTHESIS_PROMPT } from "./system-prompt";
 import { anthropic, callClaude } from "./anthropic";
 
+export interface Skill {
+    name: string;
+    category: 'backend' | 'frontend' | 'database' | 'infra' | 'etc';
+    level: 'advanced' | 'intermediate' | 'beginner';
+}
+
 export interface AnalysisResult {
     education: { score: number; summary: string };
     career: { score: number; totalYears: number; summary: string };
-    techStack: { score: number; summary: string };
+    techStack: { score: number; summary: string; skills?: Skill[] };
     aiCapability: { score: number; summary: string };
     cultureFit: { score: number; summary: string };
     basicInfo: {

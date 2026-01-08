@@ -84,6 +84,18 @@ export default function ReportPage() {
         return "★".repeat(stars) + "☆".repeat(5 - stars);
     }
 
+    const getSkillBadgeStyle = (level: string) => {
+        switch (level) {
+            case 'advanced':
+                return 'bg-green-500/20 text-green-400 border-green-500/30 hover:bg-green-500/30';
+            case 'intermediate':
+                return 'bg-blue-500/20 text-blue-400 border-blue-500/30 hover:bg-blue-500/30';
+            case 'beginner':
+            default:
+                return 'bg-gray-500/20 text-gray-400 border-gray-500/30 hover:bg-gray-500/30';
+        }
+    }
+
     const suit = getSuitability(totalScore);
 
     return (
@@ -219,6 +231,82 @@ export default function ReportPage() {
                     </CardContent>
                 </Card>
             </div>
+
+            {/* Tech Stack Visualization */}
+            {result.techStack.skills && result.techStack.skills.length > 0 && (
+                <Card className="card-glass border-white/10">
+                    <CardHeader className="pb-2">
+                        <div className="flex items-center justify-between">
+                            <CardTitle className="flex items-center gap-2">
+                                <Code className="w-5 h-5 text-primary" />
+                                기술 스택
+                            </CardTitle>
+                            <div className="flex gap-3 text-xs text-muted-foreground">
+                                <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-green-500"></span> 상급</span>
+                                <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-blue-500"></span> 중급</span>
+                                <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-gray-500"></span> 초급</span>
+                            </div>
+                        </div>
+                    </CardHeader>
+                    <CardContent className="space-y-2 pt-2">
+                        {/* Backend */}
+                        {result.techStack.skills.filter(s => s.category === 'backend').length > 0 && (
+                            <div className="flex items-start gap-3">
+                                <div className="text-xs uppercase tracking-wider text-muted-foreground font-semibold w-24 shrink-0 pt-1">백엔드</div>
+                                <div className="flex flex-wrap gap-1.5">
+                                    {result.techStack.skills.filter(s => s.category === 'backend').map((skill, i) => (
+                                        <Badge key={i} className={getSkillBadgeStyle(skill.level)}>{skill.name}</Badge>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                        {/* Frontend */}
+                        {result.techStack.skills.filter(s => s.category === 'frontend').length > 0 && (
+                            <div className="flex items-start gap-3">
+                                <div className="text-xs uppercase tracking-wider text-muted-foreground font-semibold w-24 shrink-0 pt-1">프론트엔드</div>
+                                <div className="flex flex-wrap gap-1.5">
+                                    {result.techStack.skills.filter(s => s.category === 'frontend').map((skill, i) => (
+                                        <Badge key={i} className={getSkillBadgeStyle(skill.level)}>{skill.name}</Badge>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                        {/* Database */}
+                        {result.techStack.skills.filter(s => s.category === 'database').length > 0 && (
+                            <div className="flex items-start gap-3">
+                                <div className="text-xs uppercase tracking-wider text-muted-foreground font-semibold w-24 shrink-0 pt-1">데이터베이스</div>
+                                <div className="flex flex-wrap gap-1.5">
+                                    {result.techStack.skills.filter(s => s.category === 'database').map((skill, i) => (
+                                        <Badge key={i} className={getSkillBadgeStyle(skill.level)}>{skill.name}</Badge>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                        {/* Infra */}
+                        {result.techStack.skills.filter(s => s.category === 'infra').length > 0 && (
+                            <div className="flex items-start gap-3">
+                                <div className="text-xs uppercase tracking-wider text-muted-foreground font-semibold w-24 shrink-0 pt-1">인프라/DevOps</div>
+                                <div className="flex flex-wrap gap-1.5">
+                                    {result.techStack.skills.filter(s => s.category === 'infra').map((skill, i) => (
+                                        <Badge key={i} className={getSkillBadgeStyle(skill.level)}>{skill.name}</Badge>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                        {/* Etc */}
+                        {result.techStack.skills.filter(s => s.category === 'etc').length > 0 && (
+                            <div className="flex items-start gap-3">
+                                <div className="text-xs uppercase tracking-wider text-muted-foreground font-semibold w-24 shrink-0 pt-1">기타</div>
+                                <div className="flex flex-wrap gap-1.5">
+                                    {result.techStack.skills.filter(s => s.category === 'etc').map((skill, i) => (
+                                        <Badge key={i} className={getSkillBadgeStyle(skill.level)}>{skill.name}</Badge>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+            )}
 
             <Separator className="bg-white/10 my-4" />
 

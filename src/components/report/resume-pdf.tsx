@@ -203,6 +203,19 @@ export const ResumePDF: React.FC<ResumePDFProps> = ({ data }) => {
         return '★☆☆☆☆';
     };
 
+    const getSkillBadgeStylePDF = (level: string) => {
+        const baseStyle = { padding: '2px 6px', borderRadius: 3, borderWidth: 1 };
+        switch (level) {
+            case 'advanced':
+                return { ...baseStyle, backgroundColor: '#dcfce7', borderColor: '#86efac', color: '#166534' };
+            case 'intermediate':
+                return { ...baseStyle, backgroundColor: '#dbeafe', borderColor: '#93c5fd', color: '#1e40af' };
+            case 'beginner':
+            default:
+                return { ...baseStyle, backgroundColor: '#f1f5f9', borderColor: '#cbd5e1', color: '#475569' };
+        }
+    };
+
     return (
         <Document>
             <Page size="A4" style={styles.page}>
@@ -298,6 +311,99 @@ export const ResumePDF: React.FC<ResumePDFProps> = ({ data }) => {
                         </View>
                     </View>
                 </View>
+
+                {/* Tech Stack Skills Section */}
+                {result.techStack.skills && result.techStack.skills.length > 0 && (
+                    <View style={{ marginBottom: 16, padding: 12, backgroundColor: '#f8fafc', borderRadius: 8 }} wrap={false}>
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                            <Text style={[styles.sectionTitle, { marginBottom: 0 }]}>기술 스택</Text>
+                            <View style={{ flexDirection: 'row', gap: 8 }}>
+                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
+                                    <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: '#22c55e' }} />
+                                    <Text style={{ fontSize: 6, color: '#64748b' }}>상급</Text>
+                                </View>
+                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
+                                    <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: '#3b82f6' }} />
+                                    <Text style={{ fontSize: 6, color: '#64748b' }}>중급</Text>
+                                </View>
+                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
+                                    <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: '#94a3b8' }} />
+                                    <Text style={{ fontSize: 6, color: '#64748b' }}>초급</Text>
+                                </View>
+                            </View>
+                        </View>
+
+                        {/* Backend */}
+                        {result.techStack.skills.filter(s => s.category === 'backend').length > 0 && (
+                            <View style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 4 }}>
+                                <Text style={{ fontSize: 7, fontWeight: 'bold', color: '#64748b', width: 55 }}>백엔드</Text>
+                                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 3, flex: 1 }}>
+                                    {result.techStack.skills.filter(s => s.category === 'backend').map((skill, i) => (
+                                        <View key={i} style={[getSkillBadgeStylePDF(skill.level)]}>
+                                            <Text style={{ fontSize: 7 }}>{skill.name}</Text>
+                                        </View>
+                                    ))}
+                                </View>
+                            </View>
+                        )}
+
+                        {/* Frontend */}
+                        {result.techStack.skills.filter(s => s.category === 'frontend').length > 0 && (
+                            <View style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 4 }}>
+                                <Text style={{ fontSize: 7, fontWeight: 'bold', color: '#64748b', width: 55 }}>프론트엔드</Text>
+                                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 3, flex: 1 }}>
+                                    {result.techStack.skills.filter(s => s.category === 'frontend').map((skill, i) => (
+                                        <View key={i} style={[getSkillBadgeStylePDF(skill.level)]}>
+                                            <Text style={{ fontSize: 7 }}>{skill.name}</Text>
+                                        </View>
+                                    ))}
+                                </View>
+                            </View>
+                        )}
+
+                        {/* Database */}
+                        {result.techStack.skills.filter(s => s.category === 'database').length > 0 && (
+                            <View style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 4 }}>
+                                <Text style={{ fontSize: 7, fontWeight: 'bold', color: '#64748b', width: 55 }}>데이터베이스</Text>
+                                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 3, flex: 1 }}>
+                                    {result.techStack.skills.filter(s => s.category === 'database').map((skill, i) => (
+                                        <View key={i} style={[getSkillBadgeStylePDF(skill.level)]}>
+                                            <Text style={{ fontSize: 7 }}>{skill.name}</Text>
+                                        </View>
+                                    ))}
+                                </View>
+                            </View>
+                        )}
+
+                        {/* Infra */}
+                        {result.techStack.skills.filter(s => s.category === 'infra').length > 0 && (
+                            <View style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 4 }}>
+                                <Text style={{ fontSize: 7, fontWeight: 'bold', color: '#64748b', width: 55 }}>인프라/DevOps</Text>
+                                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 3, flex: 1 }}>
+                                    {result.techStack.skills.filter(s => s.category === 'infra').map((skill, i) => (
+                                        <View key={i} style={[getSkillBadgeStylePDF(skill.level)]}>
+                                            <Text style={{ fontSize: 7 }}>{skill.name}</Text>
+                                        </View>
+                                    ))}
+                                </View>
+                            </View>
+                        )}
+
+                        {/* Etc */}
+                        {result.techStack.skills.filter(s => s.category === 'etc').length > 0 && (
+                            <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
+                                <Text style={{ fontSize: 7, fontWeight: 'bold', color: '#64748b', width: 55 }}>기타</Text>
+                                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 3, flex: 1 }}>
+                                    {result.techStack.skills.filter(s => s.category === 'etc').map((skill, i) => (
+                                        <View key={i} style={[getSkillBadgeStylePDF(skill.level)]}>
+                                            <Text style={{ fontSize: 7 }}>{skill.name}</Text>
+                                        </View>
+                                    ))}
+                                </View>
+                            </View>
+                        )}
+                    </View>
+                )}
 
                 {/* Detailed Sections */}
                 <View wrap={false}>

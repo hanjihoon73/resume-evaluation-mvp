@@ -46,7 +46,13 @@ JSON 포맷으로만 응답해야 합니다. Markdown block 없이 순수 JSON �
 {
   "education": { "score": 0, "summary": "..." },
   "career": { "score": 0, "totalYears": 0, "summary": "..." },
-  "techStack": { "score": 0, "summary": "..." },
+  "techStack": { 
+    "score": 0, 
+    "summary": "...",
+    "skills": [
+      { "name": "기술명", "category": "backend|frontend|database|infra|etc", "level": "advanced|intermediate|beginner" }
+    ]
+  },
   "aiCapability": { "score": 0, "summary": "..." },
   "cultureFit": { "score": 0, "summary": "..." },
   "basicInfo": {
@@ -65,6 +71,19 @@ JSON 포맷으로만 응답해야 합니다. Markdown block 없이 순수 JSON �
   "cons": ["단점1", "단점2"],
   "interviewQuestions": ["질문1", "질문2"]
 }
+
+[기술 스택 skills 배열 작성 지침]
+1. 이력서에서 언급된 모든 기술을 추출하여 skills 배열에 포함하십시오.
+2. category 분류 기준:
+   - backend: Java, Kotlin, Spring, Node.js, Python, Go, Ruby 등 서버/백엔드 기술
+   - frontend: React, Vue, Angular, TypeScript, JavaScript, Next.js, HTML, CSS 등
+   - database: MySQL, PostgreSQL, MongoDB, Redis, Oracle, JPA, QueryDSL 등
+   - infra: AWS, GCP, Azure, Docker, Kubernetes, Jenkins, CI/CD, Linux 등
+   - etc: Git, Jira, Slack, Figma, 기타 협업/도구
+3. level 분류 기준:
+   - advanced: 3년 이상 실무 경험 또는 핵심 기술로 명시된 경우
+   - intermediate: 1~3년 경험 또는 프로젝트에서 활용한 경우
+   - beginner: 1년 미만 또는 학습/경험 수준으로 언급된 경우
 `;
 
 export const ANALYSIS_SYNTHESIS_PROMPT = `
