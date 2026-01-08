@@ -1,35 +1,47 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { analyzeResumeWithRetry, calculateTotalScore } from '@/lib/analysis-engine';
-import { getDocument, GlobalWorkerOptions } from 'pdfjs-dist/legacy/build/pdf.mjs';
 
-// pdfjs-dist 워커 설정 (Node.js 환경에서는 워커 스크립트 경로 설정)
-// @ts-ignore - 워커 경로 지정
-GlobalWorkerOptions.workerSrc = new URL(
-    'pdfjs-dist/legacy/build/pdf.worker.mjs',
-    import.meta.url
-).toString();
+// pdf-parse를 폴백으로 사용
+const pdfParse = require('pdf-parse/lib/pdf-parse.js');
 
-// PDF 텍스트 추출 함수 (pdfjs-dist 사용)
+// PDF 텍스트 추출 함수 (pdfjs-dist 우선, pdf-parse 폴백)
 async function extractTextFromPDF(buffer: Buffer): Promise<string> {
-    const data = new Uint8Array(buffer);
-    const loadingTask = getDocument({ data });
-    const pdfDocument = await loadingTask.promise;
+    // 1차 시도: pdfjs-dist
+    try {
+        const { getDocument, GlobalWorkerOptions } = await import('pdfjs-dist/legacy/build/pdf.mjs');
 
-    let fullText = '';
+        // 워커 없이 사용 (Serverless 환경 호환)
+        GlobalWorkerOptions.workerSrc = '';
 
-    for (let pageNum = 1; pageNum <= pdfDocument.numPages; pageNum++) {
-        const page = await pdfDocument.getPage(pageNum);
-        const textContent = await page.getTextContent();
+        const data = new Uint8Array(buffer);
+        const loadingTask = getDocument({ data });
+        const pdfDocument = await loadingTask.promise;
 
-        const pageText = textContent.items
-            .map((item: any) => item.str)
-            .join(' ');
+        let fullText = '';
+        for (let pageNum = 1; pageNum <= pdfDocument.numPages; pageNum++) {
+            const page = await pdfDocument.getPage(pageNum);
+            const textContent = await page.getTextContent();
+            const pageText = textContent.items.map((item: any) => item.str).join(' ');
+            fullText += pageText + '\n';
+        }
 
-        fullText += pageText + '\n';
+        // pdfjs-dist로 텍스트 추출 성공 시 반환
+        if (fullText && fullText.trim().length > 0) {
+            return fullText;
+        }
+    } catch (pdfjsError) {
+        console.log('pdfjs-dist failed, falling back to pdf-parse:', pdfjsError);
     }
 
-    return fullText;
+    // 2차 시도: pdf-parse (폴백)
+    try {
+        const data = await pdfParse(buffer);
+        return data.text;
+    } catch (pdfParseError) {
+        console.log('pdf-parse also failed:', pdfParseError);
+        throw new Error('PDF 텍스트 추출에 실패했습니다.');
+    }
 }
 
 export async function POST(req: NextRequest) {
